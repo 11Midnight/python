@@ -22,14 +22,48 @@ def stempuk(stringg):
     for w in words:
         multiple_appends(repear_sentence, porter_stemmer.stem(w), " ")
     return "".join(repear_sentence)
+def analysis(your_list, your_dict):
+    words = word_tokenize(your_list)
+    for i in words:
+        if i in your_dict:
+            your_dict[i] += 1
+        else:
+            your_dict[i] = 1
 
-slist = []
+spamlist = []
+hamlist = []
+spamdict = {}
+hamdict = {}
 with open('sms-spam-corpus.csv', newline='') as f:
     reader = csv.DictReader(f, delimiter=',')
     for row in reader:
-        slist.append(stempuk(remove_stopwords(re.sub(r'[^A-Za-z]+', r' ', row['v1']).lower())))
-        slist.append(stempuk(remove_stopwords(re.sub(r'[^A-Za-z]+', r' ', row['v2']).lower())))
-print(slist)
+        if row['v1'] == "spam":
+            spamlist.append(stempuk(remove_stopwords(re.sub(r'[^A-Za-z]+', r' ', row['v2']).lower())))
+        elif row['v1'] == "ham":
+            hamlist.append(stempuk(remove_stopwords(re.sub(r'[^A-Za-z]+', r' ', row['v2']).lower())))
+for i in range(len(spamlist)):
+    analysis(spamlist[i], spamdict)
+for i in range(len(hamlist)):
+    analysis(hamlist[i], hamdict)
+with open("spamdict.csv", "w") as outfile:
+    writer = csv.DictWriter(outfile, fieldnames=spamdict)
+    writer.writeheader()
+    writer.writerow(spamdict)
+with open("hamdict.csv", "w") as outfile:
+    writer = csv.DictWriter(outfile, fieldnames=hamdict)
+    writer.writeheader()
+    writer.writerow(hamdict)
+#with open("repaired.csv", "w") as outfile:
+ #   for item in sorted(spamdict):
+  #      csv.writer(outfile).writerows(spamdict[item])
+        #print("'%s':%s" % (item, spamdict[item]))
+#print(ww[0])
+#print(spamdict)
+#analysis(spamlist,spamdict)
+#analysis(hamlist,hamdict)
+#for item in spamdict:
+ #   print("'%s':%s" % (item, spamdict[item]))
+
 #with open("repaired.csv", "w") as outfile:
     #csv.writer(outfile).writerows(slist)
 #np.savetxt('file_2', slist, delimiter=",")
