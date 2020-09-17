@@ -1,25 +1,17 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-import gensim
-import io
-import codecs
 import csv
 import matplotlib.pyplot as plt
 import re
 from collections import OrderedDict
-import nltk
 from gensim.parsing.preprocessing import remove_stopwords
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
-porter_stemmer = PorterStemmer()
 from nltk.tokenize import word_tokenize
+porter_stemmer = PorterStemmer()
 stop_words = set(stopwords.words('english'))
 def multiple_appends(listname, *element):
     listname.extend(element)
-def stempuk(stringg):
-    words = word_tokenize(stringg)
+def stemming(string):
+    words = word_tokenize(string)
     repear_sentence=[]
     for w in words:
         multiple_appends(repear_sentence, porter_stemmer.stem(w), " ")
@@ -62,12 +54,20 @@ def top20(your_dict):
     list_sorted = list(your_dict.items())
     list_sorted.sort(key=lambda i: i[1], reverse=True)
     top_20 = OrderedDict()
-    for k, v in list_sorted:
-        if k not in top_20:
-            top_20[k] = v
+    for key, value in list_sorted:
+        if key not in top_20:
+            top_20[key] = value
             if len(top_20) == 20:
                 break
     return top_20
+def sortdict(your_dict):
+    list_sorted = list(your_dict.items())
+    list_sorted.sort()
+    sorted = OrderedDict()
+    for key, value in list_sorted:
+        if key not in sorted:
+            sorted[key] = value
+    return sorted
 spamlist = []
 hamlist = []
 spamdict = {}
@@ -80,80 +80,87 @@ with open('sms-spam-corpus.csv', newline='') as f:
     reader = csv.DictReader(f, delimiter=',')
     for row in reader:
         if row['v1'] == "spam":
-            spamlist.append(stempuk(remove_stopwords(re.sub(r'[^A-Za-z]+', r' ', row['v2']).lower())))
+            spamlist.append(stemming(remove_stopwords(re.sub(r'[^A-Za-z]+', r' ', row['v2']).lower())))
         elif row['v1'] == "ham":
-            hamlist.append(stempuk(remove_stopwords(re.sub(r'[^A-Za-z]+', r' ', row['v2']).lower())))
+            hamlist.append(stemming(remove_stopwords(re.sub(r'[^A-Za-z]+', r' ', row['v2']).lower())))
 for i in range(len(spamlist)):
     analysis(spamlist[i], spamdict)
 for i in range(len(hamlist)):
     analysis(hamlist[i], hamdict)
-with open("spamdict.csv", "w") as outfile:
+with open("output/spamdict.csv", "w") as outfile:
     writer = csv.DictWriter(outfile, fieldnames=spamdict)
     writer.writeheader()
     writer.writerow(spamdict)
-with open("hamdict.csv", "w") as outfile:
+with open("output/hamdict.csv", "w") as outfile:
     writer = csv.DictWriter(outfile, fieldnames=hamdict)
     writer.writeheader()
     writer.writerow(hamdict)
-avgvaluespamsentence=analyslenofsentence(spamlist, spamdictlensentence)
-avgvaluehamsentence=analyslenofsentence(hamlist,hamdictlensentence)
-avgvaluespam=analyslenofword(spamdict, spamdictlenwords)
-avgvalueham=analyslenofword(hamdict, hamdictlenwords)
-spam_top_20=top20(spamdict)
-ham_top_20=top20(hamdict)
-plt.bar(spamdictlenwords.keys(), spamdictlenwords.values(), color='g')
-plt.title("Средняя длина слова: %.2f " % avgvaluespam)
+avgvaluespamsentence = analyslenofsentence(spamlist, spamdictlensentence)
+avgvaluehamsentence = analyslenofsentence(hamlist, hamdictlensentence)
+avgvaluespam = analyslenofword(spamdict, spamdictlenwords)
+avgvalueham = analyslenofword(hamdict, hamdictlenwords)
+spam_top_20 = top20(spamdict)
+ham_top_20 = top20(hamdict)
+spamdictlenwords_sorted = sortdict(spamdictlenwords)
+hamdictlenwords_sorted = sortdict(hamdictlenwords)
+spamdictlensentence_sorted = sortdict(spamdictlensentence)
+hamdictlensentence_sorted = sortdict(hamdictlensentence)
+# plt.bar(spamdictlenwords.keys(), spamdictlenwords.values(), color='g')
+# plt.title("Средняя длина слова в спаме: %.2f " % avgvaluespam)
+# plt.show()
+# plt.bar(hamdictlenwords.keys(), hamdictlenwords.values(), color='g')
+# plt.title("Средняя длина слова в хаме: %.2f " % avgvalueham)
+# plt.show()
+# plt.bar(spamdictlensentence.keys(), spamdictlensentence.values(), color='g')
+# plt.title("Средняя длина предложения в спаме: %.2f " % avgvaluespamsentence)
+# plt.show()
+# plt.bar(hamdictlensentence.keys(), hamdictlensentence.values(), color='g')
+# plt.title("Средняя длина предложения в хаме: %.2f " % avgvaluehamsentence)
+# plt.show()
+# plt.bar(spam_top_20.keys(), spam_top_20.values(), color='g')
+# plt.show()
+# plt.bar(ham_top_20.keys(), ham_top_20.values(), color='g')
+# plt.show()
+plt.plot(spamdictlenwords_sorted.keys(), spamdictlenwords_sorted.values(),label='spam',color='red')
+plt.plot (hamdictlenwords_sorted.keys(),hamdictlenwords_sorted.values(),label='ham',color='blue')
+plt.xlabel('Symbols in word', fontsize=15, color='green')
+plt.ylabel('Amount', fontsize=15, color='green')
+plt.legend()
+plt.savefig('output/wordslen')
 plt.show()
-plt.bar(hamdictlenwords.keys(), hamdictlenwords.values(), color='g')
-plt.title("Средняя длина слова: %.2f " % avgvalueham)
+plt.plot(spamdictlensentence_sorted.keys(), spamdictlensentence_sorted.values(),label='spam',color='red')
+plt.plot(hamdictlensentence_sorted.keys(), hamdictlensentence_sorted.values(),label='ham',color='blue')
+plt.xlabel('Symbols in sentence', fontsize=15, color='green')
+plt.ylabel('Amount', fontsize=15, color='green')
+plt.legend()
+plt.savefig('output/sentencelen')
 plt.show()
-plt.bar(spamdictlensentence.keys(), spamdictlensentence.values(), color='g')
-plt.title("Средняя длина предложения: %.2f " % avgvaluespamsentence)
+plt.plot(spam_top_20.keys(), spam_top_20.values(),label='spam',color='red')
+plt.xlabel('Top20 words', fontsize=15, color='green')
+plt.ylabel('Amount', fontsize=15, color='green')
+plt.legend()
+plt.savefig('output/top20_spam')
 plt.show()
-plt.bar(hamdictlensentence.keys(), hamdictlensentence.values(), color='g')
-plt.title("Средняя длина предложения: %.2f " % avgvaluehamsentence)
+plt.plot(ham_top_20.keys(), ham_top_20.values(),label='ham',color='blue')
+plt.xlabel('Top20 words', fontsize=15, color='green')
+plt.ylabel('Amount', fontsize=15, color='green')
+plt.legend()
+plt.savefig('output/top20_ham')
 plt.show()
-plt.bar(spam_top_20.keys(), spam_top_20.values(), color='g')
-plt.show()
-plt.bar(ham_top_20.keys(), ham_top_20.values(), color='g')
-plt.show()
-#with open("repaired.csv", "w") as outfile:
- #   for item in sorted(spamdict):
-  #      csv.writer(outfile).writerows(spamdict[item])
-        #print("'%s':%s" % (item, spamdict[item]))
-#print(ww[0])
-#print(spamdict)
-#analysis(spamlist,spamdict)
-#analysis(hamlist,hamdict)
-for item in sorted(spamdictlenwords):
- print("'%s':%s" % (item, spamdictlenwords[item]))
-print("-------------------------------------------------------")
-for item in sorted(hamdictlenwords):
-    print("'%s':%s" % (item, hamdictlenwords[item]))
-print("-------------------------------------------------------")
-for item in sorted(spamdictlensentence):
-    print("'%s':%s" % (item, spamdictlensentence[item]))
-print("-------------------------------------------------------")
-for item in sorted(hamdictlensentence):
-    print("'%s':%s" % (item, hamdictlensentence[item]))
-print("-------------------------------------------------------")
-for item in spam_top_20:
-    print("'%s':%s" % (item, spam_top_20[item]))
-print("-------------------------------------------------------")
-for item in ham_top_20:
-    print("'%s':%s" % (item, ham_top_20[item]))
-#new_input = [list_top20[0],list_top20]
-#result = dict([new_input])
-#print(result)
-#print(sorted(list_top20)[-5:])
-
-#with open("repaired.csv", "w") as outfile:
-    #csv.writer(outfile).writerows(slist)
-#np.savetxt('file_2', slist, delimiter=",")
-#with open('eggs.csv', 'w', newline='') as csvfile:
-    #spamwriter = csv.writer(csvfile, delimiter=';')
-   # spamwriter.writerow(slist)
-#wtr = csv.writer(open('out.csv', 'w'), delimiter=',', lineterminator='\n')
-#for x in slist: wtr.writerow([x])
-#wr = csv.writer(open('out.csv', 'w'), delimiter=";")
-#wr.writerows(slist)
+# for item in sorted(spamdictlenwords):
+#  print("'%s':%s" % (item, spamdictlenwords[item]))
+# print("-------------------------------------------------------")
+# for item in sorted(hamdictlenwords):
+#     print("'%s':%s" % (item, hamdictlenwords[item]))
+# print("-------------------------------------------------------")
+# for item in sorted(spamdictlensentence):
+#     print("'%s':%s" % (item, spamdictlensentence[item]))
+# print("-------------------------------------------------------")
+# for item in sorted(hamdictlensentence):
+#     print("'%s':%s" % (item, hamdictlensentence[item]))
+# print("-------------------------------------------------------")
+# for item in spam_top_20:
+#     print("'%s':%s" % (item, spam_top_20[item]))
+# print("-------------------------------------------------------")
+# for item in ham_top_20:
+#     print("'%s':%s" % (item, ham_top_20[item]))
